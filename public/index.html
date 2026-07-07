@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WeGeese — Flock Community & Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        html, body { 
+            background: #0A0E14; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', sans-serif;
+            color: #F1F5F9;
+        }
+        * { box-sizing: border-box; }
+        /* Smooth scrolling anchors */
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react,env">
+const { useState, useMemo } = React;
+
+/* --- Mock Database Records --- */
+const initialMembers = [
+    { id: 1, name: "Aarav Krishnan", skillRackId: "SR-2201", solved: 10, isLeader: true },
+    { id: 2, name: "Priya Natarajan", skillRackId: "SR-2214", solved: 9 },
+    { id: 3, name: "Dev Raghunathan", skillRackId: "SR-2233", solved: 7 },
+    { id: 4, name: "Sneha Balamurali", skillRackId: "SR-2247", solved: 5 },
+    { id: 5, name: "Karthik Iyer", skillRackId: "SR-2259", solved: 3 },
+    { id: 6, name: "Meera Vasanth", skillRackId: "SR-2260", solved: 1 },
+];
+
+/* --- System SVG Vectors Engine --- */
+function Icon({ children, size = 16, className = "" }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            {children}
+        </svg>
+    );
+}
+const CopyIcon = (p) => <Icon {...p}><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></Icon>;
+const LogOutIcon = (p) => <Icon {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></Icon>;
+const TargetIcon = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Icon>;
+const TrophyIcon = (p) => <Icon {...p}><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3a2 2 0 0 1-2 4h-1"/><path d="M7 5H4a2 2 0 0 0 2 4h1"/></Icon>;
+const LockIcon = (p) => <Icon {...p}><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></Icon>;
+const PartyIcon = (p) => <Icon {...p}><path d="M5.8 11.3L2 22l10.7-3.8"/><path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/><path d="M11.8 2.7l1.4 1.4-1.4 1.4 1.4 1.4-1.4 1.4"/><path d="M17.8 6.7l1.4 1.4-1.4 1.4 1.4 1.4-1.4 1.4"/></Icon>;
+const ChevronRightIcon = (p) => <Icon {...p}><path d="M9 18l6-6-6-6"/></Icon>;
+const CheckIcon = (p) => <Icon {...p}><path d="M20 6L9 17l-5-5"/></Icon>;
+const UsersIcon = (p) => <Icon {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>;
+const SparklesIcon = (p) => <Icon {...p}><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/></Icon>;
+
+function Chevron({ filled = false, size = 18, className = "" }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" className={className} fill="none">
+            <path d="M4 6L12 14L20 6" stroke={filled ? "#0A0E14" : "currentColor"} strokeWidth="3"
+                strokeLinecap="round" strokeLinejoin="round" fill={filled ? "currentColor" : "none"} />
+        </svg>
+    );
+}
+
+function Logo({ size = 28 }) {
+    return (
+        <div className="flex items-center gap-2.5">
+            <div className="relative" style={{ width: size, height: size }}>
+                <svg viewBox="0 0 40 40" className="w-full h-full">
+                    <path d="M4 30L20 8L36 30" stroke="#22D3EE" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                    <path d="M11 30L20 17L29 30" stroke="#2563EB" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.65" />
+                </svg>
+            </div>
+            <span className="text-xl font-bold tracking-tight text-slate-100" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                We<span className="text-blue-500">geese</span>
+            </span>
+        </div>
+    );
+}
+
+/* =====================================================================
+   VIEW 1: Combined Landing Page (Integrated Registration Pipeline)
+   ===================================================================== */
+function LandingPage({ onRegister }) {
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [commCode, setCommCode] = useState("");
+
+    const canSubmit = name.trim() && email.trim() && commCode.trim();
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (canSubmit) {
+            onRegister({
+                name: name.trim(),
+                skillRackId: commCode.trim(),
+                email: email.trim()
+            });
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex flex-col justify-between" style={{ background: "#0A0E14" }}>
+            {/* Navbar Header */}
+            <header className="sticky top-0 z-50 border-b backdrop-blur-md bg-slate-950/80 border-slate-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+                    <Logo />
+                    <nav className="flex items-center gap-6 text-sm font-medium">
+                        <a href="#about" className="text-slate-400 hover:text-blue-400 transition-colors">About</a>
+                        <a href="#features" className="text-slate-400 hover:text-blue-400 transition-colors">Features</a>
+                        <a href="#join" className="bg-blue-600/10 text-blue-400 border border-blue-500/20 px-3.5 py-1.5 rounded-lg font-semibold hover:bg-blue-600 hover:text-white transition-all">Join Us</a>
+                    </nav>
+                </div>
+            </header>
+
+            {/* Main Content Sections */}
+            <main className="flex-grow">
+                {/* Hero / Form Interaction Unit */}
+                <div id="join" className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-20 lg:py-24 relative overflow-hidden">
+                    {/* Background Tech Art Elements */}
+                    <div className="absolute inset-0 opacity-[0.04] pointer-events-none select-none">
+                        {[0, 1, 2].map((i) => (
+                            <svg key={i} viewBox="0 0 400 200" className="absolute w-1/2"
+                                style={{ top: `${15 + i * 25}%`, left: i % 2 === 0 ? "-5%" : "55%" }}>
+                                <path d="M0 180L200 20L400 180" stroke="#2563EB" strokeWidth="2" fill="none" />
+                            </svg>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center relative z-10">
+                        {/* Copy Left Panel Column */}
+                        <div className="lg:col-span-7 space-y-6 text-left">
+                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+                                Welcome to Wegeese
+                            </h1>
+                            <p className="text-lg text-slate-400 max-w-xl leading-relaxed">
+                                Your go-to platform for tracking, discussing, and exploring all things related to geese. 
+                                Geese fly in a <span className="text-blue-400 font-medium">V-formation</span> to cut wind resistance and travel further together. 
+                                WeGeese does the same for your coding practice — join a flock, solve problems in sync, and unlock rewards as a team.
+                            </p>
+                            <div className="inline-flex items-center gap-3 bg-blue-950/40 border border-blue-500/20 rounded-full py-2 px-4 text-sm font-medium text-blue-300">
+                                <span>🪶</span> Over 10,000 goose enthusiasts online.
+                            </div>
+                        </div>
+
+                        {/* Registration Panel Card Column */}
+                        <div className="lg:col-span-5 flex justify-center lg:justify-end">
+                            <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative"
+                                 style={{ boxShadow: "0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(37,99,235,0.05)" }}>
+                                <h3 className="text-xl font-bold text-slate-100 mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                                    Get Started
+                                </h3>
+                                <p className="text-sm text-slate-400 mb-6">
+                                    Enter your details to register your community and take your position in the formation.
+                                </p>
+
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div>
+                                        <label htmlFor="name" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Full Name</label>
+                                        <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" required
+                                            className="w-full px-4 py-2.5 rounded-lg bg-slate-950/60 border border-slate-700 text-slate-100 placeholder-slate-600 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Email Address</label>
+                                        <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required
+                                            className="w-full px-4 py-2.5 rounded-lg bg-slate-950/60 border border-slate-700 text-slate-100 placeholder-slate-600 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="community-code" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Community / SkillRack Code</label>
+                                        <input type="text" id="community-code" value={commCode} onChange={(e) => setCommCode(e.target.value)} placeholder="e.g., HONK-42" required
+                                            className="w-full px-4 py-2.5 rounded-lg bg-slate-950/60 border border-slate-700 text-slate-100 placeholder-slate-600 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-mono text-sm" />
+                                    </div>
+
+                                    <button type="submit" disabled={!canSubmit}
+                                        className={`w-full mt-2 py-3 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
+                                            canSubmit ? "bg-blue-600 text-white hover:bg-blue-500 active:scale-[0.98] shadow-lg shadow-blue-500/20"
+                                                       : "bg-slate-800 text-slate-500 cursor-not-allowed"
+                                        }`}>
+                                        Submit Application
+                                        <ChevronRightIcon size={16} />
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Info Blocks / Feature Placeholders */}
+                <div id="features" className="bg-slate-950/40 border-y border-slate-900 py-16">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div className="p-6 bg-slate-900/40 border border-slate-800/60 rounded-xl">
+                            <div className="text-blue-500 text-2xl mb-3">⚡</div>
+                            <h4 className="text-base font-bold text-white mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Real-time Formations</h4>
+                            <p className="text-sm text-slate-400">Sync your progress instantly alongside fellow engineers to visually pull each other forward.</p>
+                        </div>
+                        <div className="p-6 bg-slate-900/40 border border-slate-800/60 rounded-xl">
+                            <div className="text-blue-500 text-2xl mb-3">🛡️</div>
+                            <h4 className="text-base font-bold text-white mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Accountability Mechanics</h4>
+                            <p className="text-sm text-slate-400">Interactive goal milestones ensure no team member gets left behind or caught in headwinds.</p>
+                        </div>
+                        <div className="p-6 bg-slate-900/40 border border-slate-800/60 rounded-xl">
+                            <div className="text-blue-500 text-2xl mb-3">🏆</div>
+                            <h4 className="text-base font-bold text-white mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Flock Rewards</h4>
+                            <p className="text-sm text-slate-400">Complete community-defined custom milestones to unlock group outings, pizza parties, and titles.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            {/* Footer Component */}
+            <footer className="h-16 flex items-center justify-center border-t border-slate-800 bg-slate-950 text-xs text-slate-500 text-center">
+                <div className="max-w-7xl mx-auto px-4 w-full">
+                    <p>&copy; 2026 Wegeese. All rights reserved. Powered by absolute honks.</p>
+                </div>
+            </footer>
+        </div>
+    );
+}
+
+/* =====================================================================
+   VIEW 2: Interactive Flock Dashboard (Post-Login App Workspace)
+   ===================================================================== */
+function AppHeader({ user, onLogout }) {
+    const initials = user.name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+    return (
+        <header className="sticky top-0 z-40 border-b backdrop-blur-md bg-slate-950/85 border-slate-800">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+                <Logo />
+                <div className="flex items-center gap-3">
+                    <div className="hidden sm:flex flex-col items-end leading-tight">
+                        <span className="text-sm font-medium text-slate-200">{user.name}</span>
+                        <span className="text-xs font-mono text-slate-500">{user.skillRackId}</span>
+                    </div>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold border bg-gradient-to-br from-blue-500/15 to-emerald-500/15 border-blue-500/30 text-blue-400"
+                         style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                        {initials}
+                    </div>
+                    <button onClick={onLogout} title="Log out"
+                        className="p-2 rounded-lg border border-slate-800 text-slate-400 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 transition-all duration-200">
+                        <LogOutIcon size={16} />
+                    </button>
+                </div>
+            </div>
+        </header>
+    );
+}
+
+function FlockCodeCard({ userCommCode }) {
+    const [copied, setCopied] = useState(false);
+    const handleCopy = () => { setCopied(true); setTimeout(() => setCopied(false), 1800); };
+
+    return (
+        <div className="rounded-xl p-5 border bg-slate-900/60 border-slate-800">
+            <div className="flex items-center gap-2 mb-3">
+                <UsersIcon size={15} className="text-blue-400" />
+                <h3 className="text-xs font-semibold tracking-wide uppercase text-slate-400">Flock code</h3>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg px-4 py-3 mb-3 border bg-slate-950 border-slate-800">
+                <span className="text-lg font-semibold tracking-wider text-blue-400 font-mono">{userCommCode}</span>
+                <div className="flex gap-1">
+                    <Chevron size={14} className="text-slate-600" />
+                    <Chevron size={14} className="text-slate-700" />
+                </div>
+            </div>
+
+            <button onClick={handleCopy}
+                className={`w-full py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 ${
+                    copied ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                           : "bg-slate-800/60 text-slate-300 border border-slate-700 hover:bg-slate-800 hover:border-slate-600"
+                }`}>
+                {copied ? (<><CheckIcon size={14} /> Link copied</>) : (<><CopyIcon size={14} /> Copy invite link</>)}
+            </button>
+        </div>
+    );
+}
+
+function LeaderSettingsCard({ target, setTarget, reward, setReward }) {
+    const [draftTarget, setDraftTarget] = useState(target);
+    const [draftReward, setDraftReward] = useState(reward);
+    const [justUpdated, setJustUpdated] = useState(false);
+
+    const handleUpdate = () => {
+        setTarget(Math.max(1, Number(draftTarget) || 10));
+        setReward(draftReward.trim() || reward);
+        setJustUpdated(true);
+        setTimeout(() => setJustUpdated(false), 1800);
+    };
+
+    return (
+        <div className="rounded-xl p-5 border relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900/90 to-slate-950 border-blue-900/30">
+            <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full pointer-events-none bg-blue-500/5 blur-xl" />
+            <div className="flex items-center gap-2 mb-4 relative">
+                <SparklesIcon size={15} className="text-blue-400" />
+                <h3 className="text-xs font-semibold tracking-wide uppercase text-blue-400">Leader settings</h3>
+            </div>
+
+            <div className="space-y-3.5 relative">
+                <div>
+                    <label className="block text-xs text-slate-400 mb-1.5">Target problems per member</label>
+                    <input type="number" min={1} value={draftTarget} onChange={(e) => setDraftTarget(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-700 text-slate-100 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-mono text-sm" />
+                </div>
+                <div>
+                    <label className="block text-xs text-slate-400 mb-1.5">Flock reward / landing goal</label>
+                    <input type="text" value={draftReward} onChange={(e) => setDraftReward(e.target.value)} placeholder="Weekend Cricket Match"
+                        className="w-full px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-700 text-slate-100 placeholder-slate-600 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm" />
+                </div>
+
+                <button onClick={handleUpdate}
+                    className={`w-full py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                        justUpdated ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                    : "bg-blue-600 text-white hover:bg-blue-500 active:scale-[0.98] shadow-lg shadow-blue-500/20"
+                    }`}>
+                    {justUpdated ? (<><CheckIcon size={14} /> Target updated</>) : "Update target"}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function RewardStatusBar({ target, reward, unlocked, avgProgress }) {
+    return (
+        <div className="rounded-2xl p-6 sm:p-7 border relative overflow-hidden transition-all duration-500" style={{
+            background: unlocked ? "linear-gradient(135deg, rgba(52,211,153,0.12), #131922 60%)" : "linear-gradient(135deg, rgba(37,99,235,0.08), #131922 60%)",
+            borderColor: unlocked ? "rgba(52,211,153,0.35)" : "rgba(37,99,235,0.2)",
+            boxShadow: unlocked ? "0 0 40px rgba(52,211,153,0.12)" : "0 0 40px rgba(37,99,235,0.06)",
+        }}>
+            <div className="absolute inset-0 opacity-[0.04] pointer-events-none">
+                <svg viewBox="0 0 400 120" className="w-full h-full">
+                    <path d="M0 100L200 10L400 100" stroke={unlocked ? "#34D399" : "#2563EB"} strokeWidth="3" fill="none" />
+                </svg>
+            </div>
+
+            <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <TargetIcon size={16} className={unlocked ? "text-emerald-400" : "text-blue-400"} />
+                        <span className="text-xs font-semibold tracking-wide uppercase" style={{ color: unlocked ? "#34D399" : "#60A5FA" }}>
+                            Flock goal
+                        </span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-100 mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                        Target: {target} Problems <span className="text-slate-500 mx-1">→</span> Reward: {reward}
+                    </h2>
+                    <p className="text-sm text-slate-400">
+                        Flock average: {avgProgress}% toward formation goal
+                    </p>
+                </div>
+
+                <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border font-semibold text-sm shrink-0 transition-all duration-500 ${
+                    unlocked ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300" : "bg-slate-800/60 border-slate-700 text-slate-300"
+                }`}>
+                    {unlocked ? (<><PartyIcon size={18} className="animate-pulse" /> GOAL UNLOCKED!</>) : (<><LockIcon size={16} /> Flock Goal Locked</>)}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function MemberRow({ member, target }) {
+    const pct = Math.min(100, Math.round((member.solved / target) * 100));
+    const achieved = member.solved >= target;
+    const initials = member.name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+
+    return (
+        <div className={`rounded-xl p-4 sm:p-5 border transition-all duration-300 ${achieved ? "bg-emerald-500/[0.04]" : "bg-slate-900/60"}`} style={{
+            borderColor: achieved ? "rgba(52,211,153,0.3)" : "#1F2937",
+            boxShadow: achieved ? "0 0 24px rgba(52,211,153,0.05)" : "none",
+        }}>
+            <div className="flex items-center gap-3 sm:gap-4">
+                <Chevron filled={member.isLeader} size={16} className={member.isLeader ? "text-blue-400 shrink-0" : "text-slate-600 shrink-0"} />
+
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold border shrink-0" style={{
+                    background: achieved ? "rgba(52,211,153,0.1)" : "rgba(148,163,184,0.05)",
+                    borderColor: achieved ? "rgba(52,211,153,0.3)" : "#1F2937",
+                    color: achieved ? "#34D399" : "#94A3B8", fontFamily: "'Space Grotesk', sans-serif",
+                }}>{initials}</div>
+
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-medium text-slate-100 truncate">{member.name}</span>
+                            {member.isLeader && (
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-500/15 text-blue-400 shrink-0">Leader</span>
+                            )}
+                            <span className="text-xs text-slate-500 font-mono shrink-0">{member.skillRackId}</span>
+                        </div>
+                        {achieved && <TrophyIcon size={14} className="text-emerald-400 shrink-0" />}
+                    </div>
+
+                    <div className="w-full h-2 rounded-full overflow-hidden mb-1.5 bg-slate-950">
+                        <div className="h-full rounded-full transition-all duration-700 ease-out" style={{
+                            width: `${pct}%`,
+                            background: achieved ? "linear-gradient(90deg, #10B981, #34D399)" : "linear-gradient(90deg, #1D4ED8, #3B82F6)",
+                            boxShadow: achieved ? "0 0 8px rgba(52,211,153,0.4)" : "0 0 6px rgba(59,130,246,0.3)",
+                        }} />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400">
+                            {member.solved} / {target} Problems Solved
+                        </span>
+                        <span className={`text-xs font-semibold font-mono ${achieved ? "text-emerald-400" : "text-slate-500"}`}>
+                            {pct}%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function WeGeeseDashboard({ user, onLogout }) {
+    const [target, setTarget] = useState(10);
+    const [reward, setReward] = useState("Weekend Cricket Match & Pizza");
+    
+    // Seed database dynamically with new user registration payload details
+    const activeMembersList = useMemo(() => {
+        const structuralExists = initialMembers.some(m => m.skillRackId === user.skillRackId);
+        if (structuralExists) return initialMembers;
+        return [
+            ...initialMembers,
+            { id: Date.now(), name: user.name, skillRackId: user.skillRackId, solved: 0 }
+        ];
+    }, [user]);
+
+    const allAchieved = useMemo(() => activeMembersList.every((m) => m.solved >= target), [activeMembersList, target]);
+    const avgProgress = useMemo(() => {
+        const avg = activeMembersList.reduce((acc, m) => acc + Math.min(100, (m.solved / target) * 100), 0) / activeMembersList.length;
+        return Math.round(avg);
+    }, [activeMembersList, target]);
+
+    return (
+        <div className="min-h-screen w-full bg-slate-950" style={{ background: "#0A0E14" }}>
+            <AppHeader user={user} onLogout={onLogout} />
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+                    <aside className="space-y-5 order-2 lg:order-1">
+                        <FlockCodeCard userCommCode={user.skillRackId} />
+                        <LeaderSettingsCard target={target} setTarget={setTarget} reward={reward} setReward={setReward} />
+                    </aside>
+
+                    <section className="space-y-6 order-1 lg:order-2">
+                        <RewardStatusBar target={target} reward={reward} unlocked={allAchieved} avgProgress={avgProgress} />
+
+                        <div>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-semibold text-slate-400 tracking-wide uppercase">
+                                    Live progress trackers
+                                </h3>
+                                <span className="text-xs text-slate-500 font-mono">
+                                    {activeMembersList.filter((m) => m.solved >= target).length} / {activeMembersList.length} landed
+                                </span>
+                            </div>
+
+                            <div className="space-y-3">
+                                {activeMembersList.map((member) => (
+                                    <MemberRow key={member.id} member={member} target={target} />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    );
+}
+
+/* =====================================================================
+   Root Application Routing Orchestration Engine
+   ===================================================================== */
+function CoreApplicationRouter() {
+    const [authenticatedUser, setAuthenticatedUser] = useState(null);
+
+    if (!authenticatedUser) {
+        return <LandingPage onRegister={setAuthenticatedUser} />;
+    }
+
+    return <WeGeeseDashboard user={authenticatedUser} onLogout={() => setAuthenticatedUser(null)} />;
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<CoreApplicationRouter />);
+</script>
+</body>
+</html>
