@@ -44,7 +44,7 @@
                 solve problems together, and celebrate achievements as one.
             </p>
 
-            <a href="#" class="btn-secondary">
+            <a href="#about" class="btn-secondary">
                 Learn More
             </a>
 
@@ -53,7 +53,7 @@
         <!-- Login Card -->
         <section class="hero-login">
 
-            <form class="login-form">
+            <form class="login-form" id="authForm" novalidate>
 
                 <h3>Welcome Back</h3>
 
@@ -64,41 +64,89 @@
                 <!-- Tabs -->
                 <div class="community-tabs">
 
-                    <button class="tab-btn active" type="button">
+                    <button class="tab-btn active" type="button" data-tab="join">
                         Join Flock
                     </button>
 
-                    <button class="tab-btn" type="button">
+                    <button class="tab-btn" type="button" data-tab="create">
                         Create Flock
                     </button>
 
                 </div>
+
                 <div class="form-group">
-                    <input type="text" placeholder="Full Name" required>
+                    <input type="text" name="fullName" placeholder="Full Name" required>
+                    <span class="field-error"></span>
                 </div>
 
                 <div class="form-group">
-                    <input type="text" placeholder="SkillRack ID" required>
+                    <input type="text" name="skillRackId" placeholder="SkillRack ID" required>
+                    <span class="field-error"></span>
+                </div>
+
+                <!-- Field that swaps depending on the active tab -->
+                <div class="form-group" id="flockField">
+                    <input type="text" name="flockCode" id="flockInput" placeholder="Flock Code" required>
+                    <span class="field-error"></span>
                 </div>
 
                 <div class="form-group">
-                    <input type="text" placeholder="Flock Code" required>
+                    <input type="password" name="password" id="passwordInput" placeholder="Password" required minlength="6">
+                    <span class="field-error"></span>
                 </div>
 
-                <div class="form-group">
-                    <input type="password" placeholder="Password" required>
+                <!-- Only shown for "Create Flock" -->
+                <div class="form-group" id="confirmPasswordField" hidden>
+                    <input type="password" name="confirmPassword" id="confirmPasswordInput" placeholder="Confirm Password">
+                    <span class="field-error"></span>
                 </div>
 
-                <button class="btn-primary">
+                <div class="form-message" id="formMessage" role="alert"></div>
+
+                <button class="btn-primary" type="submit" id="submitBtn">
                     Join Flock
                 </button>
-
 
             </form>
 
         </section>
 
     </main>
+
+    <hr class="section-divider">
+
+    <section class="about" id="about">
+        <div class="about-container">
+            <h2>ABOUT We<span id="geese">Geese</span></h2>
+
+            <p>
+                WeGeese is a collaborative coding platform inspired by the way
+                geese fly in V-formation. By joining a flock, developers stay
+                accountable, solve coding challenges together, and motivate each
+                other to achieve consistent progress.
+            </p>
+
+            <div class="about-features">
+                <div class="feature-card">
+                    <i class="fas fa-users"></i>
+                    <h3>Teamwork</h3>
+                    <p>Code with your flock and grow together.</p>
+                </div>
+
+                <div class="feature-card">
+                    <i class="fas fa-code"></i>
+                    <h3>Daily Practice</h3>
+                    <p>Stay consistent with coding challenges.</p>
+                </div>
+
+                <div class="feature-card">
+                    <i class="fas fa-trophy"></i>
+                    <h3>Achievements</h3>
+                    <p>Celebrate milestones as a community.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer>
@@ -108,6 +156,8 @@
         </p>
 
     </footer>
+
+    <script src="js/main.js"></script>
 
 </body>
 
